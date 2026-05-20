@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="pa">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>CEO Punjab – Vote AR Experience</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #0a0c1e;
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      overflow: hidden;
+    }
+
+    /* ── LANDING ── */
+    #landing {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(160deg, #FF6B00 0%, #C62828 35%, #1A237E 100%);
+      padding: 1.5rem;
+      text-align: center;
+    }
+
+    .ceo-logo {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      border: 3px solid #FFD700;
+      object-fit: cover;
+      margin-bottom: 1.2rem;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.4);
+      animation: logoPulse 3s ease-in-out infinite;
+    }
+
+    @keyframes logoPulse {
+
+      0%,
+      100% {
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+      }
+
+      50% {
+        box-shadow: 0 0 50px rgba(255, 215, 0, 0.7);
+      }
+    }
+
+    #landing h1 {
+      font-size: clamp(1.4rem, 5vw, 2rem);
+      font-weight: 900;
+      line-height: 1.2;
+      margin-bottom: 0.3rem;
+    }
+
+    #landing h1 span {
+      color: #FFD700;
+    }
+
+    .punjabi-text {
+      font-size: clamp(1rem, 3.5vw, 1.3rem);
+      color: #FFD700;
+      margin-bottom: 0.3rem;
+      font-weight: 700;
+    }
+
+    .tagline {
+      font-size: 0.8rem;
+      opacity: 0.75;
+      margin-bottom: 1.5rem;
+      letter-spacing: 0.5px;
+    }
+
+    .steps {
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 1rem;
+      padding: 1rem 1.2rem;
+      width: 100%;
+      max-width: 340px;
+      margin-bottom: 1.5rem;
+      text-align: left;
+    }
+
+    .steps h3 {
+      font-size: 0.65rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      opacity: 0.6;
+      margin-bottom: 0.7rem;
+    }
+
+    .step {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.7rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .step-num {
+      width: 22px;
+      height: 22px;
+      background: #FFD700;
+      color: #000;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      font-weight: 900;
+      flex-shrink: 0;
+    }
+
+    .step p {
+      font-size: 0.82rem;
+      opacity: 0.9;
+      line-height: 1.4;
+    }
+
+    .start-btn {
+      background: #FFD700;
+      color: #000;
+      border: none;
+      border-radius: 3rem;
+      padding: 1rem 2rem;
+      font-size: 1rem;
+      font-weight: 800;
+      cursor: pointer;
+      width: 100%;
+      max-width: 300px;
+      box-shadow: 0 6px 25px rgba(255, 215, 0, 0.4);
+      transition: transform 0.15s;
+    }
+
+    .start-btn:active {
+      transform: scale(0.97);
+    }
+
+    .note {
+      font-size: 0.68rem;
+      opacity: 0.5;
+      margin-top: 0.8rem;
+    }
+
+    /* ── HUD ── */
+    #hud {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      pointer-events: none;
+    }
+
+    #hud.active {
+      display: block;
+    }
+
+    .hud-top {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 0.7rem 1rem;
+      background: linear-gradient(to bottom, rgba(0, 0, 0, 0.75), transparent);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .hud-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .hud-logo-img {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1.5px solid #FFD700;
+      object-fit: cover;
+    }
+
+    .hud-brand-text {
+      font-size: 0.8rem;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .hud-brand-text span {
+      color: #FFD700;
+      display: block;
+      font-size: 0.65rem;
+    }
+
+    .live-badge {
+      background: #d32f2f;
+      border-radius: 1rem;
+      padding: 0.2rem 0.6rem;
+      font-size: 0.65rem;
+      letter-spacing: 1px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .live-dot {
+      width: 6px;
+      height: 6px;
+      background: #fff;
+      border-radius: 50%;
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: 0
+      }
+    }
+
+    /* Scan guide */
+    .scan-guide {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      transition: opacity 0.5s;
+    }
+
+    .scan-frame {
+      width: 210px;
+      height: 210px;
+      position: relative;
+      margin: 0 auto 0.8rem;
+    }
+
+    .scan-frame::before,
+    .scan-frame::after,
+    .corner-bl,
+    .corner-br {
+      content: '';
+      position: absolute;
+      width: 32px;
+      height: 32px;
+      border-color: #FFD700;
+      border-style: solid;
+    }
+
+    .scan-frame::before {
+      top: 0;
+      left: 0;
+      border-width: 3px 0 0 3px;
+    }
+
+    .scan-frame::after {
+      top: 0;
+      right: 0;
+      border-width: 3px 3px 0 0;
+    }
+
+    .corner-bl {
+      bottom: 0;
+      left: 0;
+      border-width: 0 0 3px 3px;
+    }
+
+    .corner-br {
+      bottom: 0;
+      right: 0;
+      border-width: 0 3px 3px 0;
+    }
+
+    .scan-line {
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      right: 4px;
+      height: 2px;
+      background: linear-gradient(to right, transparent, #FFD700, transparent);
+      animation: scanAnim 2s linear infinite;
+    }
+
+    @keyframes scanAnim {
+      0% {
+        top: 4px;
+        opacity: 1;
+      }
+
+      95% {
+        top: 202px;
+        opacity: 1;
+      }
+
+      100% {
+        top: 202px;
+        opacity: 0;
+      }
+    }
+
+    .ceo-logo-small {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 215, 0, 0.5);
+      object-fit: cover;
+      margin: 0 auto 0.5rem;
+      display: block;
+    }
+
+    .scan-guide p {
+      font-size: 0.78rem;
+      opacity: 0.8;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 0.35rem 0.9rem;
+      border-radius: 1rem;
+    }
+
+    .scan-guide .pa {
+      color: #FFD700;
+      font-size: 0.82rem;
+      font-weight: 600;
+      display: block;
+      margin-top: 0.3rem;
+    }
+
+    /* Speech bubble */
+    #speech-bubble {
+      display: none;
+      position: absolute;
+      top: 4.5rem;
+      left: 1rem;
+      right: 4.5rem;
+      background: rgba(0, 0, 0, 0.88);
+      border: 2px solid #FFD700;
+      border-radius: 1rem 1rem 1rem 0;
+      padding: 0.8rem 1rem;
+      font-size: 0.78rem;
+      line-height: 1.7;
+      color: #fff;
+      pointer-events: none;
+    }
+
+    #speech-bubble.show {
+      display: block;
+      animation: fadeIn 0.4s ease;
+    }
+
+    #speech-bubble strong {
+      color: #FFD700;
+      display: block;
+      margin-bottom: 0.3rem;
+      font-size: 0.85rem;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-8px)
+      }
+
+      to {
+        opacity: 1
+      }
+    }
+
+    /* Side buttons */
+    .side-btns {
+      position: absolute;
+      top: 3.8rem;
+      right: 0.8rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      pointer-events: all;
+    }
+
+    .side-btn {
+      background: rgba(0, 0, 0, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      font-size: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Bottom info cards */
+    .hud-bottom {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 0.8rem;
+      pointer-events: all;
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.85), transparent);
+    }
+
+    .info-cards {
+      display: flex;
+      gap: 0.5rem;
+      overflow-x: auto;
+      padding-bottom: 0.3rem;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+
+    .info-cards::-webkit-scrollbar {
+      display: none;
+    }
+
+    .info-card {
+      flex-shrink: 0;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 0.75rem;
+      padding: 0.65rem 0.85rem;
+      min-width: 130px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .info-card:hover,
+    .info-card:active {
+      background: rgba(255, 215, 0, 0.15);
+      border-color: #FFD700;
+    }
+
+    .info-card .icon {
+      font-size: 1.3rem;
+      margin-bottom: 0.2rem;
+    }
+
+    .info-card .label {
+      font-size: 0.6rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      opacity: 0.55;
+    }
+
+    .info-card .val {
+      font-size: 0.78rem;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+
+    /* Modal */
+    #info-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 500;
+      background: rgba(0, 0, 0, 0.8);
+      align-items: flex-end;
+      pointer-events: all;
+    }
+
+    #info-modal.open {
+      display: flex;
+    }
+
+    .modal-sheet {
+      background: linear-gradient(160deg, #1a237e, #0d1b2a);
+      border-radius: 1.5rem 1.5rem 0 0;
+      padding: 1.5rem;
+      width: 100%;
+      border-top: 3px solid #FFD700;
+      animation: slideUp 0.3s ease;
+      position: relative;
+      max-height: 75vh;
+      overflow-y: auto;
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(100%)
+      }
+
+      to {
+        transform: translateY(0)
+      }
+    }
+
+    .modal-sheet h2 {
+      font-size: 1.1rem;
+      font-weight: 800;
+      margin-bottom: 0.3rem;
+    }
+
+    .modal-pa {
+      color: #FFD700;
+      font-size: 0.85rem;
+      margin-bottom: 0.8rem;
+      font-weight: 600;
+    }
+
+    .modal-sheet p {
+      font-size: 0.85rem;
+      opacity: 0.85;
+      line-height: 1.7;
+      margin-bottom: 0.8rem;
+    }
+
+    .modal-sheet ul {
+      padding-left: 1.1rem;
+    }
+
+    .modal-sheet li {
+      font-size: 0.82rem;
+      opacity: 0.8;
+      line-height: 1.9;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: #fff;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+
+    .share-btn {
+      width: 100%;
+      background: #FFD700;
+      color: #000;
+      border: none;
+      border-radius: 2rem;
+      padding: 0.75rem;
+      font-size: 0.9rem;
+      font-weight: 800;
+      cursor: pointer;
+      margin-top: 1rem;
+    }
+
+    /* Toast */
+    #toast {
+      position: fixed;
+      top: 4rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.9);
+      color: #FFD700;
+      border: 1px solid #FFD700;
+      border-radius: 2rem;
+      padding: 0.4rem 1.1rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      z-index: 9999;
+      opacity: 0;
+      transition: opacity 0.3s;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    #toast.show {
+      opacity: 1;
+    }
+
+    .a-canvas {
+      z-index: 0 !important;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ══ LANDING ══ -->
+  <div id="landing">
+    <img class="ceo-logo" src="images.png" alt="CEO Punjab Logo" />
+    <h1>Chief Electoral Officer<br /><span>Punjab</span></h1>
+    <p class="punjabi-text">ਵੋਟ ਪਾਓ – ਆਪਣਾ ਹੱਕ ਵਰਤੋ</p>
+    <p class="tagline">Voting Sweep AR Campaign · ਏ.ਆਰ. ਤਜ਼ਰਬਾ</p>
+
+    <div class="steps">
+      <h3>ਕਿਵੇਂ ਵਰਤਣਾ ਹੈ · How to use</h3>
+      <div class="step">
+        <div class="step-num">1</div>
+        <p>Allow camera access when prompted</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <p>Point camera at the <strong>CEO Punjab logo</strong> (poster, pamphlet or screen)</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <p>3D character appears and speaks in <strong>Punjabi</strong> 🎤</p>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <p>Tap the info cards below to learn your voting rights</p>
+      </div>
+    </div>
+
+    <button class="start-btn" onclick="startAR()">
+      🎯 AR ਸ਼ੁਰੂ ਕਰੋ · Start AR
+    </button>
+    <p class="note">Works on Android Chrome & iOS Safari · No app needed</p>
+  </div>
+
+  <!-- ══ HUD ══ -->
+  <div id="hud">
+    <div class="hud-top">
+      <div class="hud-brand">
+        <img class="hud-logo-img" src="images.png" alt="CEO Punjab" />
+        <div class="hud-brand-text">
+          CEO Punjab AR
+          <span>ਵੋਟ ਜਾਗਰੂਕਤਾ ਮੁਹਿੰਮ</span>
+        </div>
+      </div>
+      <div class="live-badge">
+        <div class="live-dot"></div>AR LIVE
+      </div>
+    </div>
+
+    <!-- Speech bubble -->
+    <div id="speech-bubble">
+      <strong>🎤 ਸੁਣੋ ਜੀ...</strong>
+      ਵੋਟ ਪਾਉਣਾ ਤੁਹਾਡਾ ਹੱਕ ਹੈ, ਇਸਨੂੰ ਇੰਝ ਨਾ ਗਵਾਓ। ਜੇ ਤੁਸੀਂ ਇਸ ਬਾਰੇ ਹੋਰ ਜਾਣਨਾ ਚਾਹੁੰਦੇ ਹੋ ਤਾਂ ਨੀਚੇ ਦਿੱਤੇ ਪੈਨਲਾਂ ਤੇ ਕਲਿੱਕ
+      ਕਰੋ।
+    </div>
+
+    <!-- Scan guide -->
+    <div class="scan-guide" id="scan-guide">
+      <img class="ceo-logo-small" src="images.png" alt="CEO Punjab" />
+      <div class="scan-frame">
+        <div class="scan-line"></div>
+        <div class="corner-bl"></div>
+        <div class="corner-br"></div>
+      </div>
+      <p>CEO Punjab logo ਵੱਲ ਕੈਮਰਾ ਕਰੋ
+        <span class="pa">Point camera at CEO Punjab logo</span>
+      </p>
+    </div>
+
+    <!-- Side controls -->
+    <div class="side-btns">
+      <button class="side-btn" onclick="speakPunjabi()" title="Speak again">🔊</button>
+      <button class="side-btn" onclick="shareApp()" title="Share">🔗</button>
+      <button class="side-btn" onclick="exitAR()" title="Exit">✕</button>
+    </div>
+
+    <!-- Bottom info cards -->
+    <div class="hud-bottom">
+      <div class="info-cards">
+        <div class="info-card" onclick="openModal('right')">
+          <div class="icon">⚖️</div>
+          <div class="label">ਤੁਹਾਡਾ ਹੱਕ</div>
+          <div class="val">ਧਾਰਾ 326 – ਵੋਟ ਦਾ ਅਧਿਕਾਰ</div>
+        </div>
+        <div class="info-card" onclick="openModal('how')">
+          <div class="icon">🗳️</div>
+          <div class="label">ਵੋਟ ਕਿਵੇਂ ਪਾਈਏ</div>
+          <div class="val">ਕਦਮ-ਦਰ-ਕਦਮ ਗਾਈਡ</div>
+        </div>
+        <div class="info-card" onclick="openModal('eid')">
+          <div class="icon">🪪</div>
+          <div class="label">ਵੋਟਰ ID</div>
+          <div class="val">EPIC ਕਾਰਡ ਅਤੇ ਬਦਲ</div>
+        </div>
+        <div class="info-card" onclick="openModal('myths')">
+          <div class="icon">❌</div>
+          <div class="label">ਭਰਮ-ਭੁਲੇਖੇ</div>
+          <div class="val">ਗਲਤ ਧਾਰਨਾਵਾਂ ਦੂਰ ਕਰੋ</div>
+        </div>
+        <div class="info-card" onclick="openModal('pledge')">
+          <div class="icon">🙏</div>
+          <div class="label">ਸਹੁੰ ਚੁੱਕੋ</div>
+          <div class="val">ਮੈਂ ਵੋਟ ਜ਼ਰੂਰ ਪਾਵਾਂਗਾ!</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ MODAL ══ -->
+  <div id="info-modal">
+    <div class="modal-sheet">
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      <h2 id="modal-title"></h2>
+      <p class="modal-pa" id="modal-pa"></p>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+
+  <!-- ══ TOAST ══ -->
+  <div id="toast"></div>
+
+  <!-- ══ A-FRAME + MINDAR SCENE ══ -->
+  <a-scene id="ar-scene"
+    mindar-image="imageTargetSrc: target.mind; autoStart: false; uiLoading: no; uiScanning: no; uiError: no;"
+    color-space="sRGB" renderer="colorManagement: true; physicallyCorrectLights: true;" vr-mode-ui="enabled: false"
+    device-orientation-permission-ui="enabled: false" style="display:none; position:fixed; inset:0; z-index:1;">
+    <a-assets>
+      <!-- GLB model loaded from separate file -->
+      <a-asset-item id="girl-model" src="traditional_dress_girl_3d_model.glb"></a-asset-item>
+    </a-assets>
+
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+    <!-- Image target index 0 = your CEO Punjab logo (compiled in target.mind) -->
+    <a-entity mindar-image-target="targetIndex: 0">
+
+      <!-- Spinning base platform -->
+      <a-circle position="0 0 0" radius="0.7" color="#1A237E" opacity="0.75" rotation="-90 0 0"
+        animation="property:rotation; from:-90 0 0; to:-90 360 0; dur:20000; easing:linear; loop:true"></a-circle>
+
+      <!-- Tricolor pulse ring -->
+      <a-ring position="0 0.01 0" radius-inner="0.68" radius-outer="0.75" color="#FF6B00" rotation="-90 0 0"
+        opacity="0.85"
+        animation="property:scale; from:1 1 1; to:1.18 1.18 1.18; dur:1500; easing:easeInOutSine; loop:true; dir:alternate"></a-ring>
+
+      <!-- 3D Girl Model -->
+      <a-entity id="girl-entity" gltf-model="#girl-model" position="0 0 0" scale="0.4 0.4 0.4"
+        animation__idle="property:position; from:0 0 0; to:0 0.03 0; dur:2000; easing:easeInOutSine; loop:true; dir:alternate"
+        animation__appear="property:scale; from:0 0 0; to:0.4 0.4 0.4; dur:800; easing:easeOutElastic"></a-entity>
+
+      <!-- Floating speech panel (visible after marker found) -->
+      <a-entity id="speech-3d" position="0 1.3 0" visible="false"
+        animation__appear="property:scale; from:0 0 0; to:1 1 1; dur:500; easing:easeOutBack">
+        <a-plane width="1.5" height="0.55" color="#000000" opacity="0.88" position="0 0 0"></a-plane>
+        <a-text value="ਵੋਟ ਪਾਓ!" align="center" color="#FFD700" width="4" position="0 0.1 0.01"
+          font="exo2bold"></a-text>
+        <a-text value="Neeche panels te click karo" align="center" color="#ffffff" width="3.2"
+          position="0 -0.1 0.01"></a-text>
+      </a-entity>
+
+      <!-- Orbiting info spheres -->
+      <a-entity animation="property:rotation; to:0 360 0; dur:6000; easing:linear; loop:true">
+        <a-sphere position="0.65 0.7 0" radius="0.09" color="#d32f2f">
+          <a-text value="VOTE" color="#fff" align="center" width="1.6" position="0 0 0.1"></a-text>
+        </a-sphere>
+      </a-entity>
+
+      <a-entity animation="property:rotation; to:0 -360 0; dur:7000; easing:linear; loop:true">
+        <a-sphere position="-0.65 0.9 0" radius="0.09" color="#1565C0">
+          <a-text value="18+" color="#fff" align="center" width="1.6" position="0 0 0.1"></a-text>
+        </a-sphere>
+      </a-entity>
+
+      <a-entity animation="property:rotation; to:0 360 0; dur:5000; easing:linear; loop:true">
+        <a-sphere position="0 0.85 0.65" radius="0.09" color="#2e7d32">
+          <a-text value="EVM" color="#fff" align="center" width="1.6" position="0 0 0.1"></a-text>
+        </a-sphere>
+      </a-entity>
+
+      <!-- Tricolor falling confetti -->
+      <a-tetrahedron position="0.2 1.6 0.1" radius="0.05" color="#FFD700"
+        animation="property:position; from:0.2 1.9 0.1; to:0.2 -0.1 0.1; dur:2800; loop:true; easing:easeInQuad">
+      </a-tetrahedron>
+      <a-tetrahedron position="-0.3 1.7 -0.1" radius="0.04" color="#FF6B00"
+        animation="property:position; from:-0.3 2.1 -0.1; to:-0.3 -0.1 -0.1; dur:3300; loop:true; easing:easeInQuad; delay:500">
+      </a-tetrahedron>
+      <a-tetrahedron position="0.4 1.8 -0.2" radius="0.045" color="#1A237E"
+        animation="property:position; from:0.4 2.2 -0.2; to:0.4 -0.1 -0.2; dur:3700; loop:true; easing:easeInQuad; delay:1100">
+      </a-tetrahedron>
+      <a-tetrahedron position="-0.1 1.5 0.3" radius="0.04" color="#d32f2f"
+        animation="property:position; from:-0.1 1.8 0.3; to:-0.1 -0.1 0.3; dur:3000; loop:true; easing:easeInQuad; delay:800">
+      </a-tetrahedron>
+
+    </a-entity>
+  </a-scene>
+
+  <script>
+    const CONTENT = {
+      right: {
+        title: "⚖️ ਵੋਟ ਦਾ ਅਧਿਕਾਰ",
+        pa: "Article 326 – ਸਰਵ-ਵਿਆਪਕ ਬਾਲਗ ਮਤਾਧਿਕਾਰ",
+        body: `<p>ਭਾਰਤੀ ਸੰਵਿਧਾਨ ਦੀ ਧਾਰਾ 326 ਤਹਿਤ 18 ਸਾਲ ਤੋਂ ਵੱਧ ਉਮਰ ਦੇ ਹਰ ਨਾਗਰਿਕ ਨੂੰ ਵੋਟ ਪਾਉਣ ਦਾ ਅਧਿਕਾਰ ਹੈ।</p>
+    <ul>
+      <li>ਜਾਤ, ਧਰਮ, ਲਿੰਗ ਤੋਂ ਬੇਪਰਵਾਹ ਵੋਟ ਦਾ ਹੱਕ</li>
+      <li>ਗੁਪਤ ਮਤਦਾਨ – ਕੋਈ ਨਹੀਂ ਜਾਣੇਗਾ ਤੁਸੀਂ ਕਿਸਨੂੰ ਵੋਟ ਦਿੱਤੀ</li>
+      <li>1950 ਤੋਂ ਸਾਰਿਆਂ ਲਈ ਵੋਟ ਦਾ ਅਧਿਕਾਰ</li>
+      <li>ਵੋਟ ਨਾ ਪਾਉਣਾ ਤੁਹਾਡੇ ਹੱਕ ਨੂੰ ਗਵਾਉਣਾ ਹੈ</li>
+    </ul>`
+      },
+      how: {
+        title: "🗳️ ਵੋਟ ਕਿਵੇਂ ਪਾਈਏ",
+        pa: "ਕਦਮ-ਦਰ-ਕਦਮ ਗਾਈਡ · Step by Step",
+        body: `<ul>
+      <li><strong>ਕਦਮ 1:</strong> voters.eci.gov.in ਤੇ ਆਪਣਾ ਨਾਮ ਲੱਭੋ</li>
+      <li><strong>ਕਦਮ 2:</strong> ਆਪਣੇ ਪੋਲਿੰਗ ਬੂਥ ਦਾ ਨੰਬਰ ਨੋਟ ਕਰੋ</li>
+      <li><strong>ਕਦਮ 3:</strong> ਵੋਟਰ ID ਜਾਂ ਕੋਈ ਹੋਰ ਮਾਨਤਾ ਪ੍ਰਾਪਤ ID ਲਿਆਓ</li>
+      <li><strong>ਕਦਮ 4:</strong> ਸਵੇਰੇ 7 ਤੋਂ ਸ਼ਾਮ 6 ਵਜੇ ਤੱਕ ਬੂਥ ਤੇ ਜਾਓ</li>
+      <li><strong>ਕਦਮ 5:</strong> ਉਂਗਲੀ ਤੇ ਸਿਆਹੀ ਲਗਾਓ, EVM ਬਟਨ ਦਬਾਓ</li>
+      <li><strong>ਕਦਮ 6:</strong> VVPAT ਸਲਿੱਪ ਦੀ ਪੁਸ਼ਟੀ ਕਰੋ</li>
+    </ul>`
+      },
+      eid: {
+        title: "🪪 ਵੋਟਰ ID ਅਤੇ ਬਦਲ",
+        pa: "EPIC Card ਅਤੇ ਹੋਰ ਮਾਨਤਾ ਪ੍ਰਾਪਤ ਦਸਤਾਵੇਜ਼",
+        body: `<p>ਵੋਟ ਪਾਉਣ ਲਈ ਤੁਸੀਂ ਇਹ ID ਵਰਤ ਸਕਦੇ ਹੋ:</p>
+    <ul>
+      <li>ਆਧਾਰ ਕਾਰਡ (Aadhaar Card)</li>
+      <li>ਪਾਸਪੋਰਟ (Passport)</li>
+      <li>ਡਰਾਈਵਿੰਗ ਲਾਇਸੈਂਸ (Driving Licence)</li>
+      <li>PAN ਕਾਰਡ</li>
+      <li>MNREGA ਜੌਬ ਕਾਰਡ</li>
+      <li>ਬੈਂਕ / ਡਾਕਘਰ ਪਾਸਬੁੱਕ (ਫੋਟੋ ਸਮੇਤ)</li>
+    </ul>
+    <p>ਵੋਟਰ ਹੈਲਪਲਾਈਨ: <strong style="color:#FFD700">1950</strong></p>`
+      },
+      myths: {
+        title: "❌ ਭਰਮ-ਭੁਲੇਖੇ ਦੂਰ ਕਰੋ",
+        pa: "ਗਲਤ ਧਾਰਨਾਵਾਂ ਦੀ ਸੱਚਾਈ",
+        body: `<ul>
+      <li><strong>ਭਰਮ:</strong> ਮੇਰੀ ਇੱਕ ਵੋਟ ਦਾ ਕੀ ਫ਼ਰਕ ਪੈਂਦਾ<br/><em>ਸੱਚ: ਕਈ ਚੋਣਾਂ ਇੱਕ-ਦੋ ਵੋਟਾਂ ਨਾਲ ਜਿੱਤੀਆਂ ਗਈਆਂ ਹਨ!</em></li>
+      <li><strong>ਭਰਮ:</strong> ਮੈਂ ਦੂਜੀ ਜਗ੍ਹਾ ਰਹਿ ਰਿਹਾ ਹਾਂ, ਵੋਟ ਨਹੀਂ ਪਾ ਸਕਦਾ<br/><em>ਸੱਚ: voters.eci.gov.in ਤੇ ਨਵੇਂ ਪਤੇ ਤੇ ਰਜਿਸਟਰ ਕਰੋ</em></li>
+      <li><strong>ਭਰਮ:</strong> ਵੋਟ ਪਾਉਣ ਵਿੱਚ ਸਾਰਾ ਦਿਨ ਲੱਗਦਾ ਹੈ<br/><em>ਸੱਚ: ਆਮਤੌਰ ਤੇ 10-20 ਮਿੰਟ ਲੱਗਦੇ ਹਨ</em></li>
+      <li><strong>ਭਰਮ:</strong> ਚੋਣ ਵਾਲੇ ਦਿਨ ਛੁੱਟੀ ਨਹੀਂ ਮਿਲਦੀ<br/><em>ਸੱਚ: ਤਨਖ਼ਾਹ ਸਮੇਤ ਛੁੱਟੀ ਕਾਨੂੰਨੀ ਹੱਕ ਹੈ</em></li>
+    </ul>`
+      },
+      pledge: {
+        title: "🙏 ਮਤਦਾਤਾ ਸਹੁੰ",
+        pa: "ਅਸੀਂ ਵੋਟ ਜ਼ਰੂਰ ਪਾਵਾਂਗੇ",
+        body: `<p style="font-style:italic;color:#FFD700;line-height:1.8;font-size:0.9rem;">
+      "ਅਸੀਂ, ਭਾਰਤ ਦੇ ਨਾਗਰਿਕ, ਲੋਕਤੰਤਰ ਵਿੱਚ ਪੂਰਨ ਆਸਥਾ ਰੱਖਦੇ ਹੋਏ, ਸਹੁੰ ਚੁੱਕਦੇ ਹਾਂ ਕਿ ਅਸੀਂ ਹਰ ਚੋਣ ਵਿੱਚ ਬਿਨਾਂ ਕਿਸੇ ਡਰ ਦੇ ਵੋਟ ਪਾਵਾਂਗੇ।"
+    </p>
+    <button class="share-btn" onclick="sharePledge()">📢 ਸਹੁੰ ਸਾਂਝੀ ਕਰੋ · Share Pledge</button>`
+      }
+    };
+
+    let arSystem = null;
+    let hasSpoken = false;
+
+    async function startAR() {
+      document.getElementById('landing').style.display = 'none';
+      const scene = document.getElementById('ar-scene');
+      scene.style.display = 'block';
+
+      const init = () => {
+        arSystem = scene.systems['mindar-image-system'];
+        if (arSystem) {
+          arSystem.start()
+            .then(() => {
+              document.getElementById('hud').classList.add('active');
+              setupMarkerEvents();
+            })
+            .catch(err => {
+              console.error(err);
+              showToast('⚠️ Camera error – please allow camera access');
+              exitAR();
+            });
+        }
+      };
+
+      if (scene.hasLoaded) { init(); }
+      else { scene.addEventListener('loaded', init, { once: true }); }
+    }
+
+    function setupMarkerEvents() {
+      const target = document.querySelector('[mindar-image-target]');
+      if (!target) return;
+
+      target.addEventListener('targetFound', () => {
+        document.getElementById('scan-guide').style.opacity = '0';
+        document.getElementById('speech-3d').setAttribute('visible', 'true');
+        if (!hasSpoken) { hasSpoken = true; setTimeout(speakPunjabi, 600); }
+        showToast('✅ CEO Punjab logo ਮਿਲਿਆ!');
+      });
+
+      target.addEventListener('targetLost', () => {
+        document.getElementById('scan-guide').style.opacity = '1';
+        document.getElementById('speech-bubble').classList.remove('show');
+        document.getElementById('speech-3d').setAttribute('visible', 'false');
+      });
+    }
+
+    function speakPunjabi() {
+      document.getElementById('speech-bubble').classList.add('show');
+      window.speechSynthesis.cancel();
+
+      const msg = new SpeechSynthesisUtterance();
+      msg.text = 'ਵੋਟ ਪਾਉਣਾ ਤੁਹਾਡਾ ਹੱਕ ਹੈ, ਇਸਨੂੰ ਇੰਝ ਨਾ ਗਵਾਓ। ਜੇ ਤੁਸੀਂ ਇਸ ਬਾਰੇ ਹੋਰ ਜਾਣਨਾ ਚਾਹੁੰਦੇ ਹੋ ਤਾਂ ਨੀਚੇ ਦਿੱਤੇ ਪੈਨਲਾਂ ਤੇ ਕਲਿੱਕ ਕਰੋ।';
+      msg.lang = 'pa-IN';
+      msg.rate = 0.85;
+      msg.pitch = 1.1;
+      msg.volume = 1;
+
+      // Fallback to Hindi voice if Punjabi not available on device
+      msg.onerror = () => {
+        const fb = new SpeechSynthesisUtterance(
+          'Vote pauna tuhada haq hai, isnu inj na gavao. Je tusi is bare hor janna chahunde ho, te neeche dite panels te click karo.'
+        );
+        fb.lang = 'hi-IN'; fb.rate = 0.85;
+        window.speechSynthesis.speak(fb);
+      };
+
+      window.speechSynthesis.speak(msg);
+      setTimeout(() => document.getElementById('speech-bubble').classList.remove('show'), 9000);
+    }
+
+    function exitAR() {
+      if (arSystem) arSystem.stop();
+      window.speechSynthesis.cancel();
+      document.getElementById('ar-scene').style.display = 'none';
+      document.getElementById('hud').classList.remove('active');
+      document.getElementById('landing').style.display = 'flex';
+      hasSpoken = false;
+    }
+
+    function openModal(key) {
+      const d = CONTENT[key]; if (!d) return;
+      document.getElementById('modal-title').textContent = d.title;
+      document.getElementById('modal-pa').textContent = d.pa;
+      document.getElementById('modal-body').innerHTML = d.body;
+      document.getElementById('info-modal').classList.add('open');
+    }
+    function closeModal() { document.getElementById('info-modal').classList.remove('open'); }
+
+    function showToast(msg, dur = 3000) {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), dur);
+    }
+
+    function shareApp() {
+      const d = { title: 'CEO Punjab Vote AR', text: 'ਵੋਟ ਪਾਓ! CEO Punjab AR experience – point camera at the CEO Punjab logo!', url: window.location.href };
+      if (navigator.share) navigator.share(d).catch(() => { });
+      else navigator.clipboard.writeText(window.location.href).then(() => showToast('🔗 Link copied!'));
+    }
+
+    function sharePledge() {
+      const text = 'ਮੈਂ ਸਹੁੰ ਚੁੱਕਦਾ ਹਾਂ ਕਿ ਮੈਂ ਵੋਟ ਜ਼ਰੂਰ ਪਾਵਾਂਗਾ! 🗳️ #MeraVote #VotingSweepPunjab #CEOPunjab';
+      if (navigator.share) navigator.share({ title: "Voter's Pledge", text });
+      else navigator.clipboard.writeText(text).then(() => showToast('📋 Pledge copied!'));
+      closeModal();
+    }
+
+    document.getElementById('info-modal').addEventListener('click', function (e) {
+      if (e.target === this) closeModal();
+    });
+  </script>
+
+</body>
+
+</html>
