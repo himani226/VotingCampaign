@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Mera Vote – Voting Sweep AR Campaign</title>
+
+  <!-- A-Frame core (free, open source) -->
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <!-- AR.js for marker-based AR (100% free, no account needed) -->
+  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0a0a1a;
+      color: #fff;
+      overflow: hidden;
+    }
+
+    /* ── LANDING SCREEN ── */
+    #landing {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(160deg, #ff6b00 0%, #d32f2f 40%, #1a237e 100%);
+      padding: 2rem;
+      text-align: center;
+    }
+
+    .ashoka-wheel {
+      width: 80px;
+      height: 80px;
+      margin-bottom: 1.5rem;
+      animation: spin 8s linear infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    #landing h1 {
+      font-size: clamp(2rem, 6vw, 3rem);
+      font-weight: 900;
+      letter-spacing: -1px;
+      line-height: 1.1;
+      margin-bottom: 0.5rem;
+      text-shadow: 0 2px 20px rgba(0,0,0,0.4);
+    }
+
+    #landing h1 span { color: #FFD700; }
+
+    #landing p.sub {
+      font-size: clamp(0.9rem, 3vw, 1.1rem);
+      opacity: 0.9;
+      margin-bottom: 0.4rem;
+    }
+
+    .badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 2rem;
+      padding: 0.3rem 1rem;
+      font-size: 0.8rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 2rem;
+    }
+
+    .steps {
+      background: rgba(0,0,0,0.2);
+      border-radius: 1rem;
+      padding: 1.2rem 1.5rem;
+      text-align: left;
+      width: 100%;
+      max-width: 340px;
+      margin-bottom: 2rem;
+    }
+
+    .steps h3 {
+      font-size: 0.75rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      opacity: 0.7;
+      margin-bottom: 0.8rem;
+    }
+
+    .step {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.8rem;
+      margin-bottom: 0.7rem;
+    }
+
+    .step-num {
+      width: 24px;
+      height: 24px;
+      background: #FFD700;
+      color: #000;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 900;
+      flex-shrink: 0;
+    }
+
+    .step p { font-size: 0.85rem; opacity: 0.9; line-height: 1.4; }
+
+    .start-btn {
+      background: #FFD700;
+      color: #000;
+      border: none;
+      border-radius: 3rem;
+      padding: 1rem 2.5rem;
+      font-size: 1.1rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      box-shadow: 0 8px 30px rgba(255,215,0,0.4);
+      transition: transform 0.15s, box-shadow 0.15s;
+      width: 100%;
+      max-width: 300px;
+    }
+
+    .start-btn:hover, .start-btn:active {
+      transform: scale(0.97);
+      box-shadow: 0 4px 15px rgba(255,215,0,0.3);
+    }
+
+    /* ── HUD OVERLAY (shown over AR camera) ── */
+    #hud {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      pointer-events: none;
+    }
+
+    #hud.active { display: block; }
+
+    /* Top bar */
+    .hud-top {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      padding: 0.8rem 1rem;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .hud-logo {
+      font-size: 1rem;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+    }
+
+    .hud-logo span { color: #FFD700; }
+
+    .hud-mode {
+      font-size: 0.7rem;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 1rem;
+      padding: 0.2rem 0.6rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* Scan target guide */
+    .scan-guide {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+
+    .scan-frame {
+      width: 200px;
+      height: 200px;
+      position: relative;
+      margin: 0 auto 1rem;
+    }
+
+    .scan-frame::before,
+    .scan-frame::after,
+    .scan-frame .corner-bl,
+    .scan-frame .corner-br {
+      content: '';
+      position: absolute;
+      width: 30px;
+      height: 30px;
+      border-color: #FFD700;
+      border-style: solid;
+    }
+
+    .scan-frame::before {
+      top: 0; left: 0;
+      border-width: 3px 0 0 3px;
+    }
+
+    .scan-frame::after {
+      top: 0; right: 0;
+      border-width: 3px 3px 0 0;
+    }
+
+    .scan-frame .corner-bl {
+      bottom: 0; left: 0;
+      border-width: 0 0 3px 3px;
+    }
+
+    .scan-frame .corner-br {
+      bottom: 0; right: 0;
+      border-width: 0 3px 3px 0;
+    }
+
+    .scan-line {
+      position: absolute;
+      top: 0; left: 4px; right: 4px;
+      height: 2px;
+      background: linear-gradient(to right, transparent, #FFD700, transparent);
+      animation: scanAnim 2s linear infinite;
+    }
+
+    @keyframes scanAnim {
+      0% { top: 4px; opacity: 1; }
+      95% { top: 192px; opacity: 1; }
+      100% { top: 192px; opacity: 0; }
+    }
+
+    .scan-guide p {
+      font-size: 0.8rem;
+      opacity: 0.8;
+      background: rgba(0,0,0,0.5);
+      padding: 0.4rem 1rem;
+      border-radius: 1rem;
+    }
+
+    /* Bottom info panel */
+    .hud-bottom {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      padding: 1rem;
+      background: linear-gradient(to top, rgba(0,0,0,0.85), transparent);
+      pointer-events: all;
+    }
+
+    .info-cards {
+      display: flex;
+      gap: 0.5rem;
+      overflow-x: auto;
+      padding-bottom: 0.5rem;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+
+    .info-cards::-webkit-scrollbar { display: none; }
+
+    .info-card {
+      flex-shrink: 0;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 0.75rem;
+      padding: 0.7rem 0.9rem;
+      min-width: 140px;
+      cursor: pointer;
+      transition: background 0.2s;
+      pointer-events: all;
+    }
+
+    .info-card:hover, .info-card.active {
+      background: rgba(255, 215, 0, 0.15);
+      border-color: #FFD700;
+    }
+
+    .info-card .icon { font-size: 1.4rem; margin-bottom: 0.3rem; }
+    .info-card .label { font-size: 0.65rem; letter-spacing: 1px; text-transform: uppercase; opacity: 0.6; }
+    .info-card .value { font-size: 0.85rem; font-weight: 700; line-height: 1.3; }
+
+    /* Info modal */
+    #info-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 500;
+      background: rgba(0,0,0,0.85);
+      align-items: flex-end;
+      pointer-events: all;
+    }
+
+    #info-modal.open { display: flex; }
+
+    .modal-sheet {
+      background: linear-gradient(160deg, #1a237e, #0d1b2a);
+      border-radius: 1.5rem 1.5rem 0 0;
+      padding: 1.5rem;
+      width: 100%;
+      border-top: 3px solid #FFD700;
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    .modal-sheet h2 { font-size: 1.2rem; font-weight: 800; margin-bottom: 0.3rem; }
+    .modal-sheet p { font-size: 0.9rem; opacity: 0.85; line-height: 1.6; margin-bottom: 1rem; }
+    .modal-sheet ul { padding-left: 1.2rem; }
+    .modal-sheet li { font-size: 0.85rem; opacity: 0.8; line-height: 1.8; }
+
+    .modal-close {
+      position: absolute;
+      top: 1rem; right: 1rem;
+      background: rgba(255,255,255,0.1);
+      border: none;
+      color: #fff;
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      font-size: 1rem;
+      cursor: pointer;
+      pointer-events: all;
+    }
+
+    /* Share button */
+    .share-btn {
+      width: 100%;
+      background: #FFD700;
+      color: #000;
+      border: none;
+      border-radius: 2rem;
+      padding: 0.8rem;
+      font-size: 0.95rem;
+      font-weight: 800;
+      cursor: pointer;
+      margin-top: 1rem;
+      pointer-events: all;
+    }
+
+    /* Selfie mode toggle */
+    .mode-toggle {
+      position: absolute;
+      top: 3.5rem;
+      right: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      pointer-events: all;
+    }
+
+    .mode-btn {
+      background: rgba(0,0,0,0.6);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #fff;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Toast notification */
+    #toast {
+      position: fixed;
+      top: 4rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.85);
+      color: #FFD700;
+      border: 1px solid #FFD700;
+      border-radius: 2rem;
+      padding: 0.5rem 1.2rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      z-index: 9999;
+      opacity: 0;
+      transition: opacity 0.3s;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    #toast.show { opacity: 1; }
+
+    /* A-Frame scene sits behind everything */
+    .a-canvas { z-index: 0 !important; }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     LANDING SCREEN
+══════════════════════════════════════════ -->
+<div id="landing">
+
+  <!-- Ashoka Wheel SVG -->
+  <svg class="ashoka-wheel" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="50" cy="50" r="46" stroke="#FFD700" stroke-width="4"/>
+    <circle cx="50" cy="50" r="8" fill="#FFD700"/>
+    <circle cx="50" cy="50" r="4" fill="#0a0a1a"/>
+    <!-- 24 spokes -->
+    <g stroke="#FFD700" stroke-width="1.5">
+      <line x1="50" y1="42" x2="50" y2="8"/>
+      <line x1="50" y1="42" x2="50" y2="8" transform="rotate(15 50 50)"/>
+      <line x1="50" y1="42" x2="50" y2="8" transform="rotate(30 50 50)"/>
+      <line x1="50" y1="42" x2="50" y2="8" transform="rotate(45 50 50)"/>
+      <line x1="50" y1="42" x2="50" y2="8" transform="rotate(60 50 50)"/>
+      <line x1="50" y1="42" x2="50" y2="8" transform="rotate(75 50 50)"/>
+      <line x1="50" y1="42" x2="50" y2="8" transform="rotate(90 50 50)"/>
+      <line x1="50" y1="42" x2="50" y2="8" transform="rotate(105 50 50)"/>
+      <line x1="50" y1="42" x2="50" y2="8" transform="rotate(120 50 50)"/>
+      <line x1="50" y1="42" x2="50" y2="8" transform="rotate(135 50 50)"/>
+      <line x1="50" y1="42" x2="50" y2="8" transform="rotate(150 50 50)"/>
+      <line x1="50" y1="42" x2="50" y2="8" transform="rotate(165 50 50)"/>
+      <line x1="50" y1="42" x2="50" y2="8" transform="rotate(180 50 50)"/>
+      <line x1="50" y1="42" x2="50" y2="8" transform="rotate(195 50 50)"/>
+      <line x1="50" y1="42" x2="50" y2="8" transform="rotate(210 50 50)"/>
+      <line x1="50" y1="42" x2="50" y2="8" transform="rotate(225 50 50)"/>
+      <line x1="50" y1="42" x2="50" y2="8" transform="rotate(240 50 50)"/>
+      <line x1="50" y1="42" x2="50" y2="8" transform="rotate(255 50 50)"/>
+      <line x1="50" y1="42" x2="50" y2="8" transform="rotate(270 50 50)"/>
+      <line x1="50" y1="42" x2="50" y2="8" transform="rotate(285 50 50)"/>
+      <line x1="50" y1="42" x2="50" y2="8" transform="rotate(300 50 50)"/>
+      <line x1="50" y1="42" x2="50" y2="8" transform="rotate(315 50 50)"/>
+      <line x1="50" y1="42" x2="50" y2="8" transform="rotate(330 50 50)"/>
+      <line x1="50" y1="42" x2="50" y2="8" transform="rotate(345 50 50)"/>
+    </g>
+  </svg>
+
+  <h1>मेरा <span>वोट</span><br/>मेरी शक्ति</h1>
+  <p class="sub">Voting Sweep AR Campaign</p>
+  <div class="badge">🗳 Election Commission of India</div>
+
+  <div class="steps">
+    <h3>How it works</h3>
+    <div class="step">
+      <div class="step-num">1</div>
+      <p>Allow camera access when prompted</p>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <p>Point camera at the <strong>Hiro marker</strong> (printed sheet or screen)</p>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <p>See 3D voting awareness content come alive!</p>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <p>Tap info cards below to learn your voting rights</p>
+    </div>
+  </div>
+
+  <button class="start-btn" onclick="startAR()">
+    🎯 Start AR Experience
+  </button>
+
+  <p style="margin-top:1rem;font-size:0.7rem;opacity:0.5;">
+    Works on Android Chrome & iOS Safari · No app download needed
+  </p>
+</div>
+
+<!-- ══════════════════════════════════════════
+     HUD OVERLAY (shown over AR)
+══════════════════════════════════════════ -->
+<div id="hud">
+  <!-- Top bar -->
+  <div class="hud-top">
+    <div class="hud-logo">मेरा <span>वोट</span></div>
+    <div class="hud-mode">AR Live</div>
+  </div>
+
+  <!-- Scan guide (hides once marker found) -->
+  <div class="scan-guide" id="scan-guide">
+    <div class="scan-frame">
+      <div class="scan-line"></div>
+      <div class="corner-bl"></div>
+      <div class="corner-br"></div>
+    </div>
+    <p>Point at Hiro marker to activate</p>
+  </div>
+
+  <!-- Mode buttons (right side) -->
+  <div class="mode-toggle">
+    <button class="mode-btn" onclick="showToast('📷 Selfie mode: point camera at your face!')" title="Selfie">🤳</button>
+    <button class="mode-btn" onclick="shareApp()" title="Share">🔗</button>
+    <button class="mode-btn" onclick="exitAR()" title="Exit">✕</button>
+  </div>
+
+  <!-- Bottom info cards -->
+  <div class="hud-bottom">
+    <div class="info-cards">
+      <div class="info-card" onclick="openModal('right')">
+        <div class="icon">⚖️</div>
+        <div class="label">Your Right</div>
+        <div class="value">Article 326 – Universal Suffrage</div>
+      </div>
+      <div class="info-card" onclick="openModal('how')">
+        <div class="icon">🗳️</div>
+        <div class="label">How to Vote</div>
+        <div class="value">Step-by-step guide</div>
+      </div>
+      <div class="info-card" onclick="openModal('eid')">
+        <div class="icon">🪪</div>
+        <div class="label">Voter ID</div>
+        <div class="value">EPIC Card & alternatives</div>
+      </div>
+      <div class="info-card" onclick="openModal('myths')">
+        <div class="icon">❌</div>
+        <div class="label">Myth Busting</div>
+        <div class="value">Common misconceptions</div>
+      </div>
+      <div class="info-card" onclick="openModal('pledge')">
+        <div class="icon">🙏</div>
+        <div class="label">Take Pledge</div>
+        <div class="value">I will vote!</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     INFO MODAL (bottom sheet)
+══════════════════════════════════════════ -->
+<div id="info-modal">
+  <div class="modal-sheet" style="position:relative">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h2 id="modal-title"></h2>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TOAST
+══════════════════════════════════════════ -->
+<div id="toast"></div>
+
+<!-- ══════════════════════════════════════════
+     A-FRAME AR SCENE
+     Uses AR.js with FREE Hiro marker
+══════════════════════════════════════════ -->
+<a-scene
+  id="ar-scene"
+  embedded
+  arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
+  renderer="logarithmicDepthBuffer: true; antialias: true;"
+  vr-mode-ui="enabled: false"
+  style="display:none; position:fixed; inset:0; z-index:1;"
+>
+  <!-- HIRO marker — free built-in marker in AR.js -->
+  <a-marker preset="hiro" id="hiro-marker">
+
+    <!-- ── BASE PLATFORM ── -->
+    <a-cylinder
+      position="0 0 0"
+      radius="1.2"
+      height="0.05"
+      color="#1a237e"
+      opacity="0.9"
+      animation="property: rotation; to: 0 360 0; dur: 30000; easing: linear; loop: true"
+    ></a-cylinder>
+
+    <!-- ── BALLOT BOX (main 3D object) ── -->
+    <a-box
+      position="0 0.6 0"
+      width="0.8" height="0.9" depth="0.6"
+      color="#1565C0"
+      shadow
+    >
+      <!-- Front face label -->
+      <a-plane
+        position="0 0 0.31"
+        width="0.75" height="0.3"
+        color="#FFD700"
+        opacity="0.95"
+      >
+        <a-text
+          value="VOTE"
+          align="center"
+          color="#000"
+          width="3"
+          position="0 0 0.01"
+          font="exo2bold"
+        ></a-text>
+      </a-plane>
+
+      <!-- Ballot slot on top -->
+      <a-box
+        position="0 0.46 0"
+        width="0.4" height="0.04" depth="0.1"
+        color="#0d47a1"
+      ></a-box>
+    </a-box>
+
+    <!-- ── FLOATING BALLOT PAPER (animated) ── -->
+    <a-plane
+      id="ballot"
+      position="0 1.8 0"
+      width="0.5" height="0.65"
+      color="#ffffff"
+      shadow
+      animation__float="property: position; from: 0 1.8 0; to: 0 2.1 0; dur: 2000; easing: easeInOutSine; loop: true; dir: alternate"
+      animation__spin="property: rotation; from: 0 -15 0; to: 0 15 0; dur: 3000; easing: easeInOutSine; loop: true; dir: alternate"
+    >
+      <!-- Tick mark on ballot -->
+      <a-text
+        value="✓ Vote"
+        align="center"
+        color="#1a237e"
+        width="4"
+        position="0 0.05 0.01"
+        font="exo2bold"
+      ></a-text>
+      <a-text
+        value="मतदान करें"
+        align="center"
+        color="#d32f2f"
+        width="3.5"
+        position="0 -0.15 0.01"
+      ></a-text>
+    </a-plane>
+
+    <!-- ── ASHOKA CHAKRA (spinning above ballot box) ── -->
+    <a-ring
+      position="0 1.5 0"
+      radius-inner="0.25"
+      radius-outer="0.32"
+      color="#FF8F00"
+      animation="property: rotation; to: 0 360 0; dur: 6000; easing: linear; loop: true"
+    ></a-ring>
+
+    <!-- ── FLOATING INFO SPHERES (orbit around) ── -->
+    <a-sphere
+      position="0.9 0.8 0"
+      radius="0.15"
+      color="#d32f2f"
+      animation="property: position; from: 0.9 0.8 0; to: -0.9 0.8 0; dur: 4000; easing: easeInOutSine; loop: true; dir: alternate"
+    >
+      <a-text value="18+" color="#fff" align="center" width="2" position="0 0 0.16"></a-text>
+    </a-sphere>
+
+    <a-sphere
+      position="-0.9 1 0"
+      radius="0.15"
+      color="#2e7d32"
+      animation="property: position; from: -0.9 1 0; to: 0.9 1 0; dur: 5000; easing: easeInOutSine; loop: true; dir: alternate"
+    >
+      <a-text value="EVM" color="#fff" align="center" width="2" position="0 0 0.16"></a-text>
+    </a-sphere>
+
+    <a-sphere
+      position="0 0.8 0.9"
+      radius="0.15"
+      color="#e65100"
+      animation="property: position; from: 0 0.8 0.9; to: 0 0.8 -0.9; dur: 3500; easing: easeInOutSine; loop: true; dir: alternate"
+    >
+      <a-text value="🗳" align="center" width="2" position="0 0 0.16"></a-text>
+    </a-sphere>
+
+    <!-- ── GROUND RING PULSE ── -->
+    <a-ring
+      position="0 0.02 0"
+      radius-inner="1.2"
+      radius-outer="1.25"
+      color="#FFD700"
+      rotation="-90 0 0"
+      animation="property: scale; from: 1 1 1; to: 1.4 1.4 1.4; dur: 2000; easing: easeOutSine; loop: true; dir: alternate"
+      opacity="0.5"
+    ></a-ring>
+
+    <!-- ── PARTICLE CONFETTI (star shapes) ── -->
+    <a-entity position="0 0 0">
+      <a-tetrahedron position="0.3 2.2 0.2" radius="0.08" color="#FFD700"
+        animation="property: position; from: 0.3 2.5 0.2; to: 0.3 0 0.2; dur: 3000; loop: true; easing: easeInQuad"></a-tetrahedron>
+      <a-tetrahedron position="-0.4 2.4 -0.1" radius="0.06" color="#d32f2f"
+        animation="property: position; from: -0.4 2.8 -0.1; to: -0.4 0 -0.1; dur: 3500; loop: true; easing: easeInQuad; delay: 500"></a-tetrahedron>
+      <a-tetrahedron position="0.5 2.1 -0.3" radius="0.07" color="#1a237e"
+        animation="property: position; from: 0.5 2.3 -0.3; to: 0.5 0 -0.3; dur: 2800; loop: true; easing: easeInQuad; delay: 1000"></a-tetrahedron>
+    </a-entity>
+
+    <!-- ── TEXT LABELS ── -->
+    <a-text
+      value="मतदान करें\nVote on Election Day"
+      align="center"
+      color="#FFD700"
+      width="4"
+      position="0 -0.2 0.9"
+      rotation="-15 0 0"
+    ></a-text>
+
+  </a-marker>
+
+  <!-- Camera -->
+  <a-entity camera></a-entity>
+</a-scene>
+
+
+<script>
+  // ── Content for info modals ──
+  const CONTENT = {
+    right: {
+      title: "⚖️ Your Constitutional Right",
+      body: `
+        <p>Under <strong>Article 326</strong> of the Indian Constitution, every citizen aged 18+ has the right to vote — regardless of caste, religion, gender, or economic status.</p>
+        <ul>
+          <li>Universal Adult Franchise since 1950</li>
+          <li>Secret ballot — no one can know who you voted for</li>
+          <li>Right to vote is a fundamental democratic right</li>
+          <li>You can vote even if your name was recently added to rolls</li>
+        </ul>
+      `
+    },
+    how: {
+      title: "🗳️ How to Vote — Step by Step",
+      body: `
+        <ul>
+          <li><strong>Step 1:</strong> Find your name on the electoral roll at voters.eci.gov.in</li>
+          <li><strong>Step 2:</strong> Note your Polling Station number & serial number</li>
+          <li><strong>Step 3:</strong> Carry Voter ID (EPIC) or any approved photo ID</li>
+          <li><strong>Step 4:</strong> Visit your polling station between 7AM – 6PM</li>
+          <li><strong>Step 5:</strong> Get finger inked, press the EVM button for your candidate</li>
+          <li><strong>Step 6:</strong> Collect VVPAT slip confirmation</li>
+        </ul>
+      `
+    },
+    eid: {
+      title: "🪪 Voter ID & Alternatives",
+      body: `
+        <p>Your <strong>EPIC card</strong> is the primary ID, but you can also use:</p>
+        <ul>
+          <li>Aadhaar Card</li>
+          <li>Passport</li>
+          <li>Driving Licence</li>
+          <li>PAN Card</li>
+          <li>MNREGA Job Card</li>
+          <li>Bank / Post Office Passbook with photo</li>
+          <li>Smart Card issued by RGI</li>
+        </ul>
+        <p>Apply / check at <strong>voters.eci.gov.in</strong> or Voter Helpline <strong>1950</strong></p>
+      `
+    },
+    myths: {
+      title: "❌ Common Myths — Busted!",
+      body: `
+        <ul>
+          <li><strong>Myth:</strong> My one vote doesn't matter<br/><em>Fact: Elections have been won by single-digit margins!</em></li>
+          <li><strong>Myth:</strong> I can't vote if I moved recently<br/><em>Fact: Register at your new address at voters.eci.gov.in</em></li>
+          <li><strong>Myth:</strong> Voting takes the whole day<br/><em>Fact: Usually 10-20 minutes including travel</em></li>
+          <li><strong>Myth:</strong> I need to take a day off<br/><em>Fact: Paid holiday on election day is your legal right</em></li>
+          <li><strong>Myth:</strong> EVM machines can be hacked<br/><em>Fact: EVMs are standalone machines with no internet connection</em></li>
+        </ul>
+      `
+    },
+    pledge: {
+      title: "🙏 Take the Voter's Pledge",
+      body: `
+        <p style="font-size:1rem;line-height:1.8;font-style:italic;color:#FFD700">
+          "We, the citizens of India, having abiding faith in democracy, hereby pledge that we will uphold the democratic traditions of our country and the dignity of free and fair elections, and that we will exercise our franchise in every election fearlessly and without being influenced by considerations of religion, race, caste, community, language or any inducement."
+        </p>
+        <button class="share-btn" onclick="sharePledge()">📢 Share This Pledge</button>
+      `
+    }
+  };
+
+  let arStarted = false;
+
+  function startAR() {
+    document.getElementById('landing').style.display = 'none';
+    document.getElementById('ar-scene').style.display = 'block';
+    document.getElementById('hud').classList.add('active');
+    arStarted = true;
+
+    // Watch for marker detection
+    const marker = document.getElementById('hiro-marker');
+    if (marker) {
+      marker.addEventListener('markerFound', () => {
+        document.getElementById('scan-guide').style.opacity = '0';
+        showToast('🎯 Marker found! AR activated!');
+      });
+      marker.addEventListener('markerLost', () => {
+        document.getElementById('scan-guide').style.opacity = '1';
+      });
+    }
+  }
+
+  function exitAR() {
+    document.getElementById('ar-scene').style.display = 'none';
+    document.getElementById('hud').classList.remove('active');
+    document.getElementById('landing').style.display = 'flex';
+  }
+
+  function openModal(key) {
+    const data = CONTENT[key];
+    if (!data) return;
+    document.getElementById('modal-title').textContent = data.title;
+    document.getElementById('modal-body').innerHTML = data.body;
+    document.getElementById('info-modal').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('info-modal').classList.remove('open');
+  }
+
+  function showToast(msg, duration = 3000) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), duration);
+  }
+
+  function shareApp() {
+    const data = {
+      title: 'मेरा वोट – Voting Sweep AR',
+      text: 'Try this AR voting awareness experience! Point your phone at the Hiro marker.',
+      url: window.location.href
+    };
+    if (navigator.share) {
+      navigator.share(data).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(window.location.href)
+        .then(() => showToast('🔗 Link copied to clipboard!'))
+        .catch(() => showToast('Share: ' + window.location.href));
+    }
+  }
+
+  function sharePledge() {
+    const text = "I take the Voter's Pledge! 🗳️ मेरा वोट मेरी शक्ति – I will vote in every election. #MeraVote #VotingSweep";
+    if (navigator.share) {
+      navigator.share({ title: "I Took the Voter's Pledge", text });
+    } else {
+      navigator.clipboard.writeText(text)
+        .then(() => showToast('📋 Pledge copied! Share it!'));
+    }
+    closeModal();
+  }
+
+  // Close modal on backdrop tap
+  document.getElementById('info-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+</script>
+
+</body>
+</html>
